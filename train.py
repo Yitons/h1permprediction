@@ -11,12 +11,90 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 from navbar import Navbar
-
+import pickle
+import pandas as pd
+from constants import US_STATE_ABBREV
+from sklearn.linear_model import LogisticRegression
 import constants
 
 base_path = constants.BASE_PATH
-
+input_dir = constants.INPUT_DIR
+header_dir = constants.HEADER_DIR
+temp_dir = constants.TEMP_DIR
 nav = Navbar()
+
+
+def UsertrainH1B(filename):
+    df = pd.read_csv(temp_dir+filename+'.csv', engine = 'python')
+    df["PW_UNIT_OF_PAY"] = df["PW_UNIT_OF_PAY"].replace(constants.unit_map)
+    selected_variables = ['CASE_STATUS',
+                          'EMPLOYER_STATE',
+                          'WORKSITE_STATE',
+                          'JOB_CATEGORY',
+                          'JOB_LEVEL',
+                          'FULL_TIME_POSITION',
+                          'PW_UNIT_OF_PAY',
+                          'PW_WAGE_LEVEL',
+                          'H-1B_DEPENDENT',
+                          'WILLFUL_VIOLATOR']
+    df = df[selected_variables]
+    cate_column_name = [
+        'EMPLOYER_STATE',
+        'WORKSITE_STATE',
+        'JOB_CATEGORY',
+        'JOB_LEVEL',
+        'FULL_TIME_POSITION',
+        'PW_UNIT_OF_PAY',
+        'PW_WAGE_LEVEL'
+        , 'H-1B_DEPENDENT',
+        'WILLFUL_VIOLATOR']
+    data = pd.get_dummies(df, columns=cate_column_name)
+    data = data.reset_index(drop=True)
+    X_train = data.drop(['CASE_STATUS'], axis=1)
+    y_train = data['CASE_STATUS']
+    model = LogisticRegression(max_iter=1000)
+    model.fit(X_train, y_train)
+
+    pickle_out = open(temp_dir + "H1B_USER_MODEL.pickle", "wb")
+    pickle.dump(model, pickle_out)
+    pickle_out.close()
+
+def USertrainPERM(filename):
+    perm = pd.read_csv(temp_dir + filename + '.csv', engine='python')
+    perm["JOB_INFO_WORK_STATE"] = perm["JOB_INFO_WORK_STATE"].map( US_STATE_ABBREV)
+    perm["EMPLOYER_STATE"] = perm["EMPLOYER_STATE"].map( US_STATE_ABBREV)
+    perm = perm.fillna("Unknown")
+    select_columns = [
+    "CASE_STATUS", "REFILE",
+    "FW_OWNERSHIP_INTEREST","PW_LEVEL_9089",
+    "JOB_INFO_WORK_STATE" , "JOB_INFO_EDUCATION" , "JOB_INFO_TRAINING",
+    "JOB_INFO_ALT_FIELD" ,"JOB_INFO_JOB_REQ_NORMAL" ,"JOB_INFO_FOREIGN_LANG_REQ",
+    "JOB_INFO_COMBO_OCCUPATION",
+    "RECR_INFO_COLL_UNIV_TEACHER",
+    "FW_INFO_BIRTH_COUNTRY", "CLASS_OF_ADMISSION",
+    "FW_INFO_TRAINING_COMP" ]
+    perm = perm[select_columns]
+    cate_column_name = [
+    "REFILE",
+    "FW_OWNERSHIP_INTEREST","PW_LEVEL_9089",
+    "JOB_INFO_WORK_STATE" , "JOB_INFO_EDUCATION" , "JOB_INFO_TRAINING",
+    "JOB_INFO_ALT_FIELD" ,"JOB_INFO_JOB_REQ_NORMAL" ,"JOB_INFO_FOREIGN_LANG_REQ",
+    "JOB_INFO_COMBO_OCCUPATION",
+    "RECR_INFO_COLL_UNIV_TEACHER",
+    "FW_INFO_BIRTH_COUNTRY", "CLASS_OF_ADMISSION",
+    "FW_INFO_TRAINING_COMP" ]
+    data = pd.get_dummies(perm, columns=cate_column_name)
+    data = data.reset_index(drop=True)
+
+    X_train = data.drop(['CASE_STATUS'], axis=1)
+    y_train = data['CASE_STATUS']
+
+    model = LogisticRegression(max_iter=1000)
+    model.fit(X_train, y_train)
+
+    pickle_out = open(temp_dir + "PERM_USER_MODEL.pickle", "wb")
+    pickle.dump(model, pickle_out)
+    pickle_out.close()
 
 upload = dbc.Container([
         html.Div([
