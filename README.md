@@ -7,3 +7,5 @@
 2020/7/22: update train.py (add two new functions and necessary header files)
 
 2020/7/25: update predict.py and all relecant files
+
+2020/7/26: update User guide.md
