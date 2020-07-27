@@ -9,3 +9,5 @@
 2020/7/25: update predict.py and all relecant files
 
 2020/7/26: update User guide.md, eda.py and eda_perm.py
+
+2020/7/27: update userguide.py
